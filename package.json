@@ -67,7 +67,7 @@
   "homepage": "https://www.scramjet.org/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/scramjetorg/scramjet.git"
+    "url": "https://github.com/scramjetorg/framework-v4.git"
   },
   "engines": {
     "node": ">=10.0.0"
