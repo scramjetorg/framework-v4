@@ -77,11 +77,11 @@
   "license": "MIT",
   "devDependencies": {
     "@otris/jsdoc-tsd": "^2.0.11",
-    "@types/node": "^18.0.3",
+    "@types/node": "^18.7.8",
     "check-dts": "^0.6.7",
     "decache": "^4.6.1",
     "dmd": "^6.1.0",
-    "eslint": "^8.19.0",
+    "eslint": "^8.22.0",
     "eslint-config-scramjet": "^3.0.0",
     "fancy-log": "^2.0.0",
     "gulp": "^4.0.2",

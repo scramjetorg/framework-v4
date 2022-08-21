@@ -8,6 +8,10 @@ type ThenFunction = (arg: any) => any;
 type Options = DataStreamOptions;
 
 declare class PromiseTransform implements Readable, Writable {
+    writableNeedDrain: boolean;
+    closed: boolean;
+    errored: Error;
+    [Symbol.asyncIterator](): AsyncIterableIterator<any>;
     readableAborted: boolean;
     readableDidRead: boolean;
     _construct?(callback: (error?: Error) => void): void;
