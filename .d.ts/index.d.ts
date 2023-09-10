@@ -7,7 +7,34 @@ type AsyncFunction = (...args: any[]) => Promise<any>;
 type ThenFunction = (arg: any) => any;
 type Options = DataStreamOptions;
 
+interface ArrayOptions {
+    concurrency?: number;
+    signal?: AbortSignal;
+}
+
+type SignalOption = Pick<ArrayOptions, "signal">;
+
 declare class PromiseTransform implements Readable, Writable {
+    [Symbol.asyncIterator](): AsyncIterableIterator<any>;
+    [Symbol.asyncDispose](): Promise<void>;
+    iterator(options?: { destroyOnReturn?: boolean; }): AsyncIterableIterator<any>;
+    map(fn: (data: any, options?: SignalOption) => any, options?: ArrayOptions): never;
+    filter(fn: (data: any, options?: SignalOption) => boolean | Promise<boolean>, options?: ArrayOptions): never;
+    forEach(fn: (data: any, options?: SignalOption) => void | Promise<void>, options?: ArrayOptions): never;
+    toArray(options?: SignalOption): never;
+    some(fn: (data: any, options?: SignalOption) => boolean | Promise<boolean>, options?: ArrayOptions): never;
+    find<T>(fn: (data: any, options?: SignalOption) => data is T, options?: ArrayOptions): never;
+    find(fn: (data: any, options?: SignalOption) => boolean | Promise<boolean>, options?: ArrayOptions): never;
+    every(fn: (data: any, options?: SignalOption) => boolean | Promise<boolean>, options?: ArrayOptions): never;
+    flatMap(fn: (data: any, options?: SignalOption) => any, options?: ArrayOptions): never;
+    drop(limit: number, options?: SignalOption): Readable;
+    take(limit: number, options?: SignalOption): Readable;
+    asIndexedPairs(options?: SignalOption): Readable;
+    reduce<T = any>(fn: (previous: any, data: any, options?: SignalOption) => T, initial?: undefined, options?: SignalOption): never;
+    reduce<T = any>(fn: (previous: T, data: any, options?: SignalOption) => T, initial: T, options?: SignalOption): never;
+    [Symbol.asyncIterator](): AsyncIterableIterator<any>;
+    compose<T extends NodeJS.ReadableStream>(stream: T | ((source: any) => void) | Iterable<T> | AsyncIterable<T>, options?: { signal: AbortSignal; }): T;
+    compose<T extends NodeJS.ReadableStream>(stream: T | ((source: any) => void) | Iterable<T> | AsyncIterable<T>, options?: { signal: AbortSignal; }): T;
     writableNeedDrain: boolean;
     closed: boolean;
     errored: Error;
@@ -189,6 +216,18 @@ declare function API(version: number): ScramjetPlugin;
  * ```
  */
 declare class DataStream extends PromiseTransform {
+    map(fn: (data: any, options?: SignalOption) => any, options: ArrayOptions): never;
+    filter(fn: (data: any, options: SignalOption) => boolean | Promise<boolean>, options: ArrayOptions): never;
+    forEach(fn: (data: any, options: SignalOption) => void | Promise<void>, options: ArrayOptions): never;
+    toArray(options: SignalOption): never;
+    some(fn: (data: any, options: SignalOption) => boolean | Promise<boolean>, options: ArrayOptions): never;
+    find<T>(fn: (data: any, options: SignalOption) => data is T, options: ArrayOptions): never;
+    find(fn: (data: any, options: SignalOption) => boolean | Promise<boolean>, options: ArrayOptions): never;
+    every(fn: (data: any, options: SignalOption) => boolean | Promise<boolean>, options: ArrayOptions): never;
+    flatMap(fn: (data: any, options: SignalOption) => any, options: ArrayOptions): never;
+    reduce<T = any>(fn: (previous: any, data: any, options: SignalOption) => T, initial: undefined, options: SignalOption): never;
+    reduce<T = any>(fn: (previous: T, data: any, options: SignalOption) => T, initial: T, options: SignalOption): never;
+
     /**
      * DataStream is the primary stream type for Scramjet. When you parse your stream, just pipe it you can then perform calculations on the data objects streamed through your flow. Use as: ```javascript const { DataStream } = require('scramjet'); await (DataStream.from(aStream) // create a DataStream .map(findInFiles)           // read some data asynchronously .map(sendToAPI)             // send the data somewhere .run());                    // wait until end ```
      */

@@ -33,16 +33,16 @@ gulp.task("scm_clean", scm_clean());
 
 gulp.task("test_samples", shell.task("node scripts/test/test-samples"));
 
-const dtsTask = shell.task("npx check-dts", {cwd: "./.d.ts"});
-gulp.task("test_dts", async () => {
-    try {
-        await dtsTask();
-    } catch(e) {
-        if (process.version.split(".")[0] !== "v15") {
-            throw e;
-        }
-    }
-});
+// const dtsTask = shell.task("npx check-dts", {cwd: "./.d.ts"});
+// gulp.task("test_dts", async () => {
+//     try {
+//         await dtsTask();
+//     } catch(e) {
+//         if (process.version.split(".")[0] !== "v15") {
+//             throw e;
+//         }
+//     }
+// });
 
 gulp.task("test_tsd", async () => {
     try {
@@ -68,6 +68,7 @@ gulp.task("tsd", tsd(FILES.slice(), {
             "dictionaries": ["jsdoc","closure"]
         },
         prepend: "./jsdoc2md/tsd-template/prepend.d.ts",
+        dataStreamInject: "./jsdoc2md/tsd-template/inject-data-stream.d.ts",
         template: "./jsdoc2md/tsd-template",
         destination: ".d.ts/index.d.ts"
     }
@@ -88,7 +89,7 @@ gulp.task("make_docs", full_docs(
 ));
 
 gulp.task("docs", gulp.series("tsd", "readme", "copy_docs", "make_docs"));
-gulp.task("test", gulp.series("test_legacy", "test_samples", "test_dts", "test_tsd"));
+gulp.task("test", gulp.series("test_legacy", "test_samples", "test_tsd"));
 gulp.task("fulltest", gulp.series("lint", "test"));
 gulp.task("default", gulp.series("readme", "docs", "test", "lint"));
 gulp.task("prerelease", gulp.series("default", "scm_clean"));

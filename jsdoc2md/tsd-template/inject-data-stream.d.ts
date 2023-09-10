@@ -1,0 +1,11 @@
+    map(fn: (data: any, options?: SignalOption) => any, options: ArrayOptions): never;
+    filter(fn: (data: any, options: SignalOption) => boolean | Promise<boolean>, options: ArrayOptions): never;
+    forEach(fn: (data: any, options: SignalOption) => void | Promise<void>, options: ArrayOptions): never;
+    toArray(options: SignalOption): never;
+    some(fn: (data: any, options: SignalOption) => boolean | Promise<boolean>, options: ArrayOptions): never;
+    find<T>(fn: (data: any, options: SignalOption) => data is T, options: ArrayOptions): never;
+    find(fn: (data: any, options: SignalOption) => boolean | Promise<boolean>, options: ArrayOptions): never;
+    every(fn: (data: any, options: SignalOption) => boolean | Promise<boolean>, options: ArrayOptions): never;
+    flatMap(fn: (data: any, options: SignalOption) => any, options: ArrayOptions): never;
+    reduce<T = any>(fn: (previous: any, data: any, options: SignalOption) => T, initial: undefined, options: SignalOption): never;
+    reduce<T = any>(fn: (previous: T, data: any, options: SignalOption) => T, initial: T, options: SignalOption): never;
