@@ -77,7 +77,7 @@
   "license": "MIT",
   "devDependencies": {
     "@otris/jsdoc-tsd": "^3.0.0",
-    "@types/node": "^18.11.18",
+    "@types/node": "^18.17.15",
     "check-dts": "^0.6.7",
     "decache": "^4.6.1",
     "dmd": "^6.2.0",
@@ -104,6 +104,6 @@
   "dependencies": {
     "papaparse": "^5.3.2",
     "rereadable-stream": "^1.4.14",
-    "scramjet-core": "^4.32.10"
+    "scramjet-core": "^4.32.12"
   }
 }

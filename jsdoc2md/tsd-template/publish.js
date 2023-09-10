@@ -72,9 +72,12 @@ function publish(data, opts) {
         }
     }
 
+    const injectDataStream = fs.readFileSync(path.resolve(opts.dataStreamInject), { encoding: "utf-8" });
+
     const typedefs = parser.generateTypeDefinition()
         .replace(/\.</g, "<")
-        .replace("declare class DataStream {", "declare class DataStream extends PromiseTransform {");
+        .replace("declare class DataStream {", "declare class DataStream extends PromiseTransform {")
+        .replace("class DataStream extends PromiseTransform {", "class DataStream extends PromiseTransform {\n" + injectDataStream);
 
     try {
         fs.writeFileSync(

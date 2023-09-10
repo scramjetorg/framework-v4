@@ -57,7 +57,9 @@ module.exports = scramjet.fromArray(
             })
     )
     .assign(async (test) => {
-        const {file, prefix, method} = test;
+        const {file, prefix: _prefix, method} = test;
+
+        const prefix = `${_prefix}:${method}`;
 
         try {
             await access(file, fs.constants.R_OK);

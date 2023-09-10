@@ -68,6 +68,7 @@ gulp.task("tsd", tsd(FILES.slice(), {
             "dictionaries": ["jsdoc","closure"]
         },
         prepend: "./jsdoc2md/tsd-template/prepend.d.ts",
+        dataStreamInject: "./jsdoc2md/tsd-template/inject-data-stream.d.ts",
         template: "./jsdoc2md/tsd-template",
         destination: ".d.ts/index.d.ts"
     }
