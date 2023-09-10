@@ -1,4 +1,4 @@
-import {Readable, Writable, Transform, ArrayOptions} from "stream";
+import {Readable, Writable, Transform} from "stream";
 
 import {EventEmitter} from "events";
 
@@ -7,9 +7,16 @@ type AsyncFunction = (...args: any[]) => Promise<any>;
 type ThenFunction = (arg: any) => any;
 type Options = DataStreamOptions;
 
+interface ArrayOptions {
+    concurrency?: number;
+    signal?: AbortSignal;
+}
+
 type SignalOption = Pick<ArrayOptions, "signal">;
 
 declare class PromiseTransform implements Readable, Writable {
+    [Symbol.asyncIterator](): AsyncIterableIterator<any>;
+    [Symbol.asyncDispose](): Promise<void>;
     iterator(options?: { destroyOnReturn?: boolean; }): AsyncIterableIterator<any>;
     map(fn: (data: any, options?: SignalOption) => any, options?: ArrayOptions): never;
     filter(fn: (data: any, options?: SignalOption) => boolean | Promise<boolean>, options?: ArrayOptions): never;
