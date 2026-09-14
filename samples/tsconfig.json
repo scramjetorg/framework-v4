@@ -1,9 +1,0 @@
-{
-  "extends": "eslint-config-scramjet/ts/tsconfig.json",
-  "compilerOptions": {
-    "baseUrl": "./",
-    "paths": {
-      "scramet": ["../.d.ts/"]
-    }
-  }
-}
