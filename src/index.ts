@@ -6,6 +6,7 @@ import { NumberStream } from "./number-stream.js";
 import { WindowStream } from "./window-stream.js";
 import { corePipeline, errors, PromiseTransformStream, registerFrameworkClasses, StreamError } from "./shared.js";
 import type { DataStreamOptions } from "./shared.js";
+export type { ExecOptions, ForkOptions } from "./execution.js";
 
 export type { CsvOptions, DataStreamOptions, StringSource } from "./shared.js";
 

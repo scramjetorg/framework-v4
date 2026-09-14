@@ -8,8 +8,8 @@ TypeScript source through the root `bun` export. Deep imports are not supported.
 
 - CommonJS entrypoints, plugins/mixins, string-module loading, dynamic module
   factories, generated docs, and the legacy Gulp/tooling surface were removed.
-- `exec`, `distribute`, `cluster`, worker, and related execution APIs remain
-  explicit throw placeholders. They require a separate execution redesign.
+- `exec`, `distribute`, and `delegate` use the Node-only execution backend
+  described below. Legacy cluster/worker APIs remain unavailable.
 - Deep imports and undocumented legacy helpers are unavailable; use the root
   package exports and the documented stream classes.
 
@@ -23,7 +23,8 @@ TypeScript source through the root `bun` export. Deep imports are not supported.
 | String `from` module-loader overload | Removed (REQ-005) | Use literal strings with `StringStream.from("text")`; use `fromURL(new URL(...))` for HTTP(S). |
 | String `pipeline` module-loader path | Removed (REQ-005) | Use the root `pipeline` with stream values and ordinary transform functions. |
 | `ReReadable` | Replaced locally | Use chainable `DataStream.keep(length)`, then `rewind()` or `tail(count)`. |
-| `exec`, `distribute`, `cluster`, worker/thread execution | Throwing placeholders (REQ-009) | These APIs intentionally throw pending a separate execution redesign. |
+| `exec`, `distribute`, `delegate` | Node child-process backend | Use JSON Lines for `DataStream.exec`; use trusted ESM/CJS modules for forked transforms. |
+| `cluster`, worker/thread execution | Unavailable | Node-only child processes are used instead; no worker_threads or WASM backend is provided. |
 
 ## Sources and URLs
 
@@ -52,3 +53,23 @@ const values = await DataStream.from([1, 2])
 Node resolves the built ESM/declaration branch. Bun resolves `src/index.ts` from
 the same package tarball. Both runtimes use the same public root API and should
 not rely on `dist` or `src` deep imports.
+
+## Node execution
+
+The historical surface was documented as `exec`, `distribute`, `cluster`, worker/thread execution;
+the first two now use the Node backend below, while the legacy cluster/worker portion remains unavailable.
+
+`DataStream.exec(command)` writes one JSON value plus a newline per input and
+parses nonblank JSON Lines from stdout. `StringStream.exec(command)` forwards
+raw string input and output. Commands are trusted shell command lines; stderr,
+nonzero exits, malformed JSON, aborts, and stream backpressure fail the output
+stream.
+
+`DataStream.distribute(modulePath, { concurrency })` and
+`DataStream.delegate(modulePath, { concurrency })` fork trusted ESM or CJS
+modules exporting `(value, { ref }) => result`. `distribute` emits completion
+order; `delegate` preserves input order. Module stdout is reserved for the
+protocol and arbitrary module code runs with the caller's process privileges;
+callers are responsible for command/module, environment, and path risks.
+These APIs return a single `DataStream`; use `MultiStream.mux` or explicit
+mapping when fanout is required.

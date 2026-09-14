@@ -4,6 +4,8 @@ import type { CoreDataStreamOptions, CsvOptions, DataStreamOptions } from "./sha
 import type { BufferStream } from "./buffer-stream.js";
 import type { MultiStream } from "./multi-stream.js";
 import type { StringStream } from "./string-stream.js";
+import { execJson, forkTransform } from "./execution.js";
+import type { ExecOptions, ForkOptions } from "./execution.js";
 
 export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
   static from(source: Parameters<typeof CoreDataStream.from>[0], options?: DataStreamOptions): DataStream<any> {
@@ -507,6 +509,15 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return output;
   }
 
-  exec(): never { throw new Error("DataStream.exec is unavailable during recovery; use the future execution redesign."); }
-  distribute(): never { throw new Error("DataStream.distribute is unavailable during recovery; use the future execution redesign."); }
+  exec(command: string, options?: ExecOptions): DataStream<any> {
+    return execJson(this, command, () => new (this.constructor as any)() as DataStream<any>, options) as DataStream<any>;
+  }
+
+  distribute<Output = unknown>(modulePath: string, options?: ForkOptions): DataStream<Output> {
+    return forkTransform(this, modulePath, () => new (this.constructor as any)() as DataStream<Output>, false, options) as DataStream<Output>;
+  }
+
+  delegate<Output = unknown>(modulePath: string, options?: ForkOptions): DataStream<Output> {
+    return forkTransform(this, modulePath, () => new (this.constructor as any)() as DataStream<Output>, true, options) as DataStream<Output>;
+  }
 }

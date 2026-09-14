@@ -1,5 +1,6 @@
 import { Readable } from "node:stream";
 import { BufferStream, DataStream, MultiStream, NumberStream, StringStream, WindowStream } from "scramjet";
+import type { ExecOptions, ForkOptions } from "scramjet";
 
 const data: DataStream<number> = DataStream.from([1, 2, 3]);
 const mapped: Promise<number[]> = data.map((value) => value * 2).toArray();
@@ -32,6 +33,10 @@ const windowSums: NumberStream = WindowStream.from([[1, 2]]).sum();
 const windowAverages: NumberStream = WindowStream.from([[1, 2]]).avg();
 const windows: WindowStream = data.window(2);
 const separatedInto: DataStream<number> = data.separateInto({ sink: new DataStream<number>() }, () => "sink");
+const execOutput: DataStream<unknown> = data.exec("node command");
+const stringExecOutput: StringStream = strings.exec("node command", {} satisfies ExecOptions);
+const distributeOutput: DataStream<unknown> = data.distribute("./transform.cjs", { concurrency: 2 } satisfies ForkOptions);
+const delegateOutput: DataStream<unknown> = data.delegate("./transform.mjs");
 const replayable: DataStream<number> = DataStream.from([1, 2]).keep(2);
 const replayReader: Readable = replayable.rewind();
 const replayTail: Readable = replayable.tail(1);
@@ -103,6 +108,10 @@ void windowSums;
 void windowAverages;
 void windows;
 void separatedInto;
+void execOutput;
+void stringExecOutput;
+void distributeOutput;
+void delegateOutput;
 void replayable;
 void replayReader;
 void replayTail;

@@ -35,7 +35,8 @@ test("DataStream keep/rewind, peek, assign, empty, and accumulate waves", async 
   assert.equal(total.value, 6);
 });
 
-test("execution methods throw without starting a backend", () => {
-  assert.throws(() => DataStream.from([1]).exec("echo unsafe"), /unavailable during recovery/);
-  assert.throws(() => DataStream.from([1]).distribute(), /unavailable during recovery/);
+test("execution methods are available through the Node backend", () => {
+  assert.equal(typeof DataStream.from([1]).exec, "function");
+  assert.equal(typeof DataStream.from([1]).distribute, "function");
+  assert.equal(typeof DataStream.from([1]).delegate, "function");
 });

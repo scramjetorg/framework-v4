@@ -7,6 +7,6 @@ const pending = [
 
 for (const method of pending) test.skip(`${method}: retained, pending implementation (Phase 1)`, () => {});
 
-// String/worker execution remains intentionally outside the DataStream wave.
-for (const method of ["StringStream.exec", "cluster/worker execution"])
+// Legacy cluster/worker execution remains outside the approved Node fork wave.
+for (const method of ["cluster/worker execution"])
   test.skip(`${method}: REQ-009 throw-placeholder coverage`, () => {});

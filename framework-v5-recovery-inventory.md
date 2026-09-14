@@ -10,10 +10,10 @@ The baseline contains **76 conformance/transition test files**: 75 files in
 
 | Disposition | Count | Meaning |
 | --- | ---: | --- |
-| Retained/runnable | 69 | Ported to independently runnable `node:test` recovery waves |
+| Retained/runnable | 72 | Ported to independently runnable `node:test` recovery waves |
 | Retained/pending | 1 | Public v4 surface retained, but implementation remains outside completed waves; explicit skip in `test/recovery/pending-methods.test.js` |
 | REQ-005 removal | 2 | Plugin/mixin and string module loading are intentionally unavailable |
-| REQ-009 placeholder | 4 | Execution/worker entry points are tracked as explicit throw-placeholder work |
+| REQ-009 placeholder | 1 | Legacy cluster/worker entry point remains outside the Node fork backend |
 | **Total** | **76** | Every historical conformance file has one disposition |
 
 `framework.test.js`, the retained waves under `test/recovery/`, and
@@ -41,10 +41,10 @@ corresponding historical filename/method below.
 | `data-stream-consume.js` | DataStream.consume | Retained/runnable — `data-stream-waves.test.js` |
 | `data-stream-csv.js` | DataStream.CSVStringify | Retained/runnable — `data-stream-csv.test.js` |
 | `data-stream-debug.js` | DataStream.debug | Retained/runnable — `data-stream-waves.test.js` |
-| `data-stream-distribute.js` | DataStream.distribute | REQ-009 placeholder — `data-stream-waves.test.js` |
+| `data-stream-distribute.js` | DataStream.distribute | Retained/runnable — `execution.test.js` |
 | `data-stream-empty.js` | DataStream.empty | Retained/runnable — `data-stream-waves.test.js` |
 | `data-stream-endwith.js` | DataStream.endWith | Retained/runnable — `data-stream-waves.test.js` |
-| `data-stream-exec.js` | DataStream.exec | REQ-009 placeholder — `data-stream-waves.test.js` |
+| `data-stream-exec.js` | DataStream.exec | Retained/runnable — `execution.test.js` |
 | `data-stream-filter.js` | DataStream.filter | Retained/runnable — `data-stream-filter.test.js` |
 | `data-stream-flatmap.js` | DataStream.flatMap | Retained/runnable — `data-stream-waves.test.js` |
 | `data-stream-flatten.js` | DataStream.flatten | Retained/runnable — `data-stream-waves.test.js` |
@@ -92,7 +92,7 @@ corresponding historical filename/method below.
 | `scramjet-plugin.js` | plugin/mixin registry | REQ-005 removal — `removed-surfaces.test.js` |
 | `string-stream-append.js` | StringStream.append | Retained/runnable — `string-stream-transform.test.js` |
 | `string-stream-constructor.js` | StringStream constructor/factory | Retained/runnable — `framework.test.js` and `string-stream-lines.test.js` |
-| `string-stream-exec.js` | StringStream.exec | REQ-009 placeholder — `pending-methods.test.js` execution group |
+| `string-stream-exec.js` | StringStream.exec | Retained/runnable — `execution.test.js` |
 | `string-stream-get.js` | StringStream.get | Retained/pending — StringStream group |
 | `string-stream-match.js` | StringStream.match | Retained/runnable — `string-buffer-waves.test.js` |
 | `string-stream-parse.js` | StringStream.parse | Retained/runnable — `string-buffer-waves.test.js` |

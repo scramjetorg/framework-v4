@@ -2,8 +2,14 @@ import { CoreDataStream, fetchURL, getFrameworkClass } from "./shared.js";
 import type { CoreDataStreamOptions, CsvOptions, DataStreamOptions, StringSource } from "./shared.js";
 import { DataStream } from "./data-stream.js";
 import type { BufferStream } from "./buffer-stream.js";
+import { execRaw } from "./execution.js";
+import type { ExecOptions } from "./execution.js";
 
 export class StringStream extends DataStream<string> {
+
+  exec(command: string, options?: ExecOptions): StringStream {
+    return execRaw(this, command, () => new (this.constructor as any)(), options);
+  }
 
   static get SPLIT_LINE(): RegExp {
     return /\r\n?|\n/;

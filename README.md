@@ -19,6 +19,8 @@ const records = await StringStream
 - `StringStream.lines`, `append`, `prepend`, `JSONParse`, and `CSVParse`.
 - `DataStream.JSONStringify` and `CSVStringify`.
 - `DataStream.keep(length)`, `rewind()`, and `tail(count)` for bounded live replay.
+- Node-only `DataStream.exec`, `StringStream.exec`, `DataStream.distribute`, and
+  `DataStream.delegate` execution helpers.
 
 CSV support is implemented in this package to retain the documented framework feature without a parser runtime dependency. It supports delimiter-separated rows, quoted cells, escaped quotes, and optional header records.
 
@@ -43,7 +45,7 @@ reader, and finish or fail with the source.
 
 ## Packaging and migration
 
-v5 replaces the CommonJS plugin, worker, dynamic-module, legacy runner, Gulp, and generated-doc surfaces. It retains the stream transformation model and the documented JSON/CSV convenience features. OFCA is intentionally not a runtime dependency. See [MIGRATION.md](MIGRATION.md) for removed APIs, URL sources, composition semantics, execution placeholders, and Node/Bun use.
+v5 replaces the CommonJS plugin, worker_threads/WASM backend, dynamic-module, legacy runner, Gulp, and generated-doc surfaces. It retains the stream transformation model and the documented JSON/CSV convenience features. OFCA is intentionally not a runtime dependency. See [MIGRATION.md](MIGRATION.md) for execution, removed APIs, URL sources, composition semantics, and Node/Bun use.
 
 The package has root-only conditional exports: Node resolves built ESM JavaScript
 and declarations, while Bun resolves the shipped TypeScript source. Deep imports
