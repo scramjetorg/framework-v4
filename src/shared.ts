@@ -1,6 +1,7 @@
 import { Readable } from "node:stream";
 import type { ReadableOptions, Transform, TransformOptions } from "node:stream";
 import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
 
 export type CoreModule = typeof import("scramjet-core");
 export type CoreDataStreamClass = CoreModule["DataStream"];
@@ -11,8 +12,8 @@ export type CoreDataStreamOptions = NonNullable<ConstructorParameters<CoreDataSt
 export type DataStreamOptions<Chunk = unknown, Output = Chunk> = TransformOptions & Record<string, unknown>;
 export type CorePipeline = (readable: Parameters<CoreDataStreamClass["from"]>[0], ...transforms: unknown[]) => CoreDataStreamInstance;
 
-const require = createRequire(import.meta.url);
-const core = require("scramjet-core") as CoreModule;
+const coreRequire = createRequire(typeof __filename === "string" ? __filename : pathToFileURL(`${process.cwd()}/package.json`));
+const core = coreRequire("scramjet-core") as CoreModule;
 export const CoreDataStream: CoreDataStreamClass = core.DataStream;
 export const CoreBufferStream: CoreBufferStreamClass = core.BufferStream;
 export const CoreMultiStream: CoreMultiStreamClass = core.MultiStream;

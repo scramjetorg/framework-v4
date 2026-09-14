@@ -15,6 +15,7 @@ const distManifest = {
       node: {
         types: "./index.d.ts",
         import: "./index.js",
+        require: "./index.cjs",
       },
       types: "./index.d.ts",
       import: "./index.js",
@@ -29,12 +30,15 @@ const distManifest = {
 };
 
 await rm("dist", { force: true, recursive: true });
-await mkdir("dist", { recursive: true });
+await mkdir("dist/cjs", { recursive: true });
 await Promise.all([
   cp(".build", "dist", { recursive: true }),
+  cp(".build-cjs", "dist/cjs", { recursive: true }),
   cp("src", "dist/src", { recursive: true }),
   cp("README.md", "dist/README.md"),
   cp("MIGRATION.md", "dist/MIGRATION.md"),
   cp("LICENSE", "dist/LICENSE"),
+  writeFile("dist/cjs/package.json", '{"type":"commonjs"}\n'),
+  writeFile("dist/index.cjs", 'module.exports = require("./cjs/index.js");\n'),
   writeFile("dist/package.json", `${JSON.stringify(distManifest, null, 2)}\n`),
 ]);

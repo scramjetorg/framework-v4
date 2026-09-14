@@ -50,6 +50,14 @@ const nodeFixture = [
 ].join("\n");
 await writeFile(resolve(consumer, "node-consumer.mjs"), `${nodeFixture}\n`);
 await run(process.execPath, ["node-consumer.mjs"], { cwd: consumer, stdio: "inherit" });
+const cjsFixture = [
+  'const assert = require("node:assert/strict");',
+  'const { DataStream } = require("scramjet");',
+  'assert.match(require.resolve("scramjet"), /scramjet[\\/]index\\.cjs$/);',
+  '(async () => assert.deepEqual(await DataStream.from([1, 2]).map((value) => value + 1).toArray(), [2, 3]))();',
+].join("\n");
+await writeFile(resolve(consumer, "node-consumer.cjs"), `${cjsFixture}\n`);
+await run(process.execPath, ["node-consumer.cjs"], { cwd: consumer, stdio: "inherit" });
 
 const bunFixture = [
   'import { DataStream } from "scramjet";',

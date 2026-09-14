@@ -14,7 +14,8 @@
       },
       "node": {
         "types": "./dist/index.d.ts",
-        "import": "./dist/index.js"
+        "import": "./dist/index.js",
+        "require": "./dist/index.cjs"
       },
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
@@ -22,7 +23,7 @@
   },
   "scripts": {
     "clean": "node scripts/clean.mjs",
-    "build": "npm run clean && tsc --project tsconfig.build.json && node scripts/assemble-dist.mjs",
+    "build": "npm run clean && tsc --project tsconfig.build.json && tsc --project tsconfig.cjs.json && node scripts/assemble-dist.mjs",
     "test": "npm run test:node",
     "test:node": "npm run build && node --test test/*.test.js test/recovery/*.test.js",
     "test:bun": "node scripts/bun-check.mjs",

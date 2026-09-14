@@ -311,6 +311,51 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return this.map((chunk) => { observer(chunk); return chunk; });
   }
 
+  window(length: number): import("./window-stream.js").WindowStream {
+    if (!(+length > 0)) throw new Error("Length argument must be a positive integer!");
+    const WindowClass = getFrameworkClass<typeof import("./window-stream.js").WindowStream>("WindowStream");
+    const output = new WindowClass();
+    const values: Chunk[] = [];
+    let pending = Promise.resolve();
+    this.on("data", (chunk: Chunk) => {
+      this.pause();
+      pending = pending.then(async () => {
+        values.push(chunk);
+        if (values.length > length) values.shift();
+        if (!output.write(values.slice())) await new Promise<void>((resolve) => output.once("drain", resolve));
+        void this.resume();
+      }).catch((error) => { output.destroy(error); });
+    });
+    this.once("error", (error) => output.destroy(error));
+    this.once("end", () => {
+      pending.then(() => { output.end(); }).catch((error) => { output.destroy(error); });
+    });
+    return output;
+  }
+
+  separateInto(
+    streams: Record<string | symbol, { write(chunk: Chunk): boolean; whenWrote?: (chunk: Chunk) => PromiseLike<unknown>; once?: (event: string, listener: () => void) => unknown }>,
+    affinity: (chunk: Chunk) => string | symbol | PromiseLike<string | symbol>,
+  ): this {
+    let pending = Promise.resolve();
+    const fail = (error: unknown): void => { this.destroy(error as Error); };
+    const writeToTarget = async (chunk: Chunk): Promise<void> => {
+      const key = await affinity(chunk);
+      const target = streams[key];
+      if (!target) throw new Error(`Output for ${String(key)} not found in ${JSON.stringify(chunk)}`);
+      if (target.whenWrote) {
+        await target.whenWrote(chunk);
+      } else if (!target.write(chunk)) {
+        await new Promise<void>((resolve) => target.once?.("drain", resolve));
+      }
+    };
+    this.on("data", (chunk: Chunk) => {
+      this.pause();
+      pending = pending.then(() => writeToTarget(chunk)).then(() => { this.resume(); }).catch(fail);
+    });
+    return this;
+  }
+
   keep(length = -1): this {
     const normalizedLength = length < 0 ? Number.POSITIVE_INFINITY : length;
     if (!(normalizedLength === Number.POSITIVE_INFINITY || Number.isSafeInteger(normalizedLength)) || normalizedLength < 0) {

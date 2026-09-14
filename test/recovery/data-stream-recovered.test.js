@@ -1,7 +1,34 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { Readable, Writable } from "node:stream";
-import { BufferStream, DataStream, MultiStream, StringStream } from "../../dist/index.js";
+import { BufferStream, DataStream, MultiStream, StringStream, WindowStream } from "../../dist/index.js";
+
+test("DataStream.window emits partial snapshots and retains Framework type", async () => {
+  const windows = DataStream.from([1, 2, 3]).window(2);
+  assert.ok(windows instanceof WindowStream);
+  assert.deepEqual(await windows.toArray(), [[1], [1, 2], [2, 3]]);
+  for (const length of [0, -1, Number.NaN]) assert.throws(() => DataStream.from([]).window(length), /positive integer/);
+});
+
+test("DataStream.separateInto awaits caller targets without ending them", async () => {
+  const targets = {
+    even: { values: [], async whenWrote(value) { await new Promise((resolve) => setTimeout(resolve, 1)); this.values.push(value); } },
+    odd: { values: [], async whenWrote(value) { this.values.push(value); } },
+  };
+  const source = DataStream.from([1, 2, 3, 4]);
+  assert.equal(source.separateInto(targets, (value) => value % 2 === 0 ? "even" : "odd"), source);
+  await source.toArray();
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.deepEqual(targets.even.values, [2, 4]);
+  assert.deepEqual(targets.odd.values, [1, 3]);
+});
+
+test("DataStream.separateInto reports missing targets", async () => {
+  const source = DataStream.from([1]);
+  const error = new Promise((resolve) => source.once("error", resolve));
+  source.separateInto({}, () => "missing");
+  assert.match((await error).message, /Output for missing not found/);
+});
 
 test("DataStream pull and into preserve Framework streams and ordering", async () => {
   const target = DataStream.from([1, 2, 3]).into(
