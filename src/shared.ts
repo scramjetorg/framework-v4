@@ -9,6 +9,7 @@ export type CoreBufferStreamClass = CoreModule["BufferStream"];
 export type CoreMultiStreamClass = CoreModule["MultiStream"];
 export type CoreDataStreamInstance = InstanceType<CoreDataStreamClass>;
 export type CoreDataStreamOptions = NonNullable<ConstructorParameters<CoreDataStreamClass>[0]>;
+/** Node stream construction options accepted by Framework stream factories. */
 export type DataStreamOptions<Chunk = unknown, Output = Chunk> = TransformOptions & Record<string, unknown>;
 export type CorePipeline = (readable: Parameters<CoreDataStreamClass["from"]>[0], ...transforms: unknown[]) => CoreDataStreamInstance;
 
@@ -26,12 +27,15 @@ export const StreamError: typeof Error = errors.StreamError;
 
 export const corePipeline = (CoreDataStream as typeof CoreDataStream & { pipeline: CorePipeline }).pipeline;
 
+/** @internal */
 const frameworkClasses = new Map<string, unknown>();
 
+/** @internal Register Framework sibling constructors for cross-kind operations. */
 export function registerFrameworkClasses(classes: Record<string, unknown>): void {
   for (const [name, value] of Object.entries(classes)) frameworkClasses.set(name, value);
 }
 
+/** @internal Resolve a registered Framework sibling constructor. */
 export function getFrameworkClass<T>(name: string): T {
   const value = frameworkClasses.get(name);
   if (!value) throw new Error(`Framework class ${name} is not initialized`);
@@ -48,6 +52,7 @@ interface ReplaySource {
   emit(event: string, ...args: any[]): boolean;
 }
 
+/** @internal Bounded replay state used by DataStream.keep(). */
 export class ReplayState {
   readonly buffer: ReplayChunk[] = [];
   readonly readers = new Set<ReplayReadable>();

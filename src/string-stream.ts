@@ -5,8 +5,13 @@ import type { BufferStream } from "./buffer-stream.js";
 import { execRaw } from "./execution.js";
 import type { ExecOptions } from "./execution.js";
 
+/** Text stream with line, parser, encoding, and raw Node command helpers. */
 export class StringStream extends DataStream<string> {
 
+  /** Run a trusted shell command with raw string stdin and stdout.
+   * @param command Trusted shell command line.
+   * @param options Child-process and abort options.
+   */
   exec(command: string, options?: ExecOptions): StringStream {
     return execRaw(this, command, () => new (this.constructor as any)(), options);
   }
@@ -15,12 +20,15 @@ export class StringStream extends DataStream<string> {
     return /\r\n?|\n/;
   }
 
+  /** Split text into lines while preserving stream backpressure. */
   lines(): DataStream<string> {
     return this.split(StringStream.SPLIT_LINE);
   }
 
+  /** Remove a character prefix and report it before passing the remainder. */
   shift(characters: number, callback: (chunk: string) => unknown): StringStream;
   shift(characters: number, callback: (chunks: string[]) => unknown): DataStream<string>;
+  /** Remove a character prefix and report it before passing the remainder. */
   shift(characters: number, callback: ((chunk: string) => unknown) | ((chunks: string[]) => unknown)): StringStream {
     if (!Number.isInteger(characters) || characters < 0) throw new RangeError("shift count must be a non-negative integer");
     const output = new StringStream();
@@ -65,10 +73,12 @@ export class StringStream extends DataStream<string> {
     return output;
   }
 
+  /** Alias for shifting characters from the front of the stream. */
   pop(characters: number, callback: (chunk: string) => unknown): StringStream {
     return this.shift(characters, callback);
   }
 
+  /** Split text by a string or regular expression. */
   split(splitter: string | RegExp): StringStream {
     if (!(typeof splitter === "string" || splitter instanceof RegExp)) throw new TypeError("Splitter must be a string or RegExp");
     const output = new StringStream();
@@ -103,6 +113,7 @@ export class StringStream extends DataStream<string> {
     return output;
   }
 
+  /** Emit text matching a regular expression. */
   match(matcher: RegExp): StringStream {
     if (!(matcher instanceof RegExp)) throw new TypeError("Matcher must be a RegExp");
     const flags = matcher.flags.includes("g") ? matcher.flags : `${matcher.flags}g`;
@@ -137,18 +148,21 @@ export class StringStream extends DataStream<string> {
     return output;
   }
 
+  /** Append fixed or computed text to each chunk. */
   append(value: string | ((chunk: string) => string | PromiseLike<string>)): StringStream {
     const output = new StringStream();
     this.map(async (chunk: string) => `${chunk}${typeof value === "function" ? await value(chunk) : value}`).pipe(output);
     return output;
   }
 
+  /** Prepend fixed or computed text to each chunk. */
   prepend(value: string | ((chunk: string) => string | PromiseLike<string>)): StringStream {
     const output = new StringStream();
     this.map(async (chunk: string) => `${typeof value === "function" ? await value(chunk) : value}${chunk}`).pipe(output);
     return output;
   }
 
+  /** Parse JSON values, one per line by default. */
   JSONParse(perLine = true): DataStream<unknown> {
     const source = perLine ? this.lines() : this;
     const output = new DataStream<unknown>();
@@ -156,6 +170,7 @@ export class StringStream extends DataStream<string> {
     return output;
   }
 
+  /** Parse CSV rows into arrays or header-keyed records. */
   CSVParse(options: CsvOptions = {}): DataStream<Record<string, string> | string[]> {
     const delimiter = options.delimiter ?? ",";
     const hasHeader = options.header ?? true;
@@ -224,34 +239,41 @@ export class StringStream extends DataStream<string> {
     return output;
   }
 
+  /** Parse each string chunk into a typed DataStream value. */
   parse<T>(parser: (chunk: string) => T | PromiseLike<T>): DataStream<T> {
     const output = new DataStream<T>();
     this.map(parser as any).pipe(output);
     return output;
   }
 
+  /** Alias for parse(). */
   toDataStream<T>(parser: (chunk: string) => T | PromiseLike<T>): DataStream<T> {
     return this.parse(parser);
   }
 
+  /** Encode each string chunk as UTF-8 bytes. */
   toBufferStream(): BufferStream {
     return (this as any).map((chunk: string) => Buffer.from(chunk), getFrameworkClass("BufferStream")) as BufferStream;
   }
 
+  /** Return this StringStream unchanged. */
   toStringStream(): StringStream {
     return this;
   }
 
+  /** Create a StringStream from literal text or a string source. */
   static from(source: any, options?: DataStreamOptions): StringStream {
     const output = new this(options);
     CoreDataStream.from(normalizeStringSource(source), options as CoreDataStreamOptions).map((chunk) => String(chunk)).pipe(output);
     return output;
   }
 
+  /** Create a StringStream from one literal string. */
   static fromString(value: string): StringStream {
     return this.from(value);
   }
 
+  /** Fetch a URL and decode its body into a StringStream. */
   static async fromURL(url: URL, options: { encoding?: string } = {}): Promise<StringStream> {
     const response = await fetchURL(url);
     const bytes = new Uint8Array(await response.arrayBuffer());

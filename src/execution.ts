@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 import type { DataStream } from "./data-stream.js";
 import type { StringStream } from "./string-stream.js";
 
+/** Options passed to a trusted Node shell command. */
 export interface ExecOptions {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
@@ -13,6 +14,7 @@ export interface ExecOptions {
   [key: string]: unknown;
 }
 
+/** Options for a trusted forked ESM or CommonJS transform module. */
 export interface ForkOptions {
   concurrency?: number;
   signal?: AbortSignal;

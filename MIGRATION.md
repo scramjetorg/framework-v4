@@ -7,7 +7,8 @@ TypeScript source through the root `bun` export. Deep imports are not supported.
 ## Removed surfaces
 
 - CommonJS entrypoints, plugins/mixins, string-module loading, dynamic module
-  factories, generated docs, and the legacy Gulp/tooling surface were removed.
+  factories, and the legacy Gulp/tooling surface were removed. Checked-in API
+  documentation is generated from the emitted Framework ESM build.
 - `exec`, `distribute`, and `delegate` use the Node-only execution backend
   described below. Legacy cluster/worker APIs remain unavailable.
 - Deep imports and undocumented legacy helpers are unavailable; use the root

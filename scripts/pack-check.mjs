@@ -50,6 +50,7 @@ const nodeFixture = [
 ].join("\n");
 await writeFile(resolve(consumer, "node-consumer.mjs"), `${nodeFixture}\n`);
 await run(process.execPath, ["node-consumer.mjs"], { cwd: consumer, stdio: "inherit" });
+await access(resolve(consumer, "node_modules/scramjet/docs/DataStream.md"));
 const cjsFixture = [
   'const assert = require("node:assert/strict");',
   'const { DataStream } = require("scramjet");',

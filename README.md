@@ -22,6 +22,9 @@ const records = await StringStream
 - Node-only `DataStream.exec`, `StringStream.exec`, `DataStream.distribute`, and
   `DataStream.delegate` execution helpers.
 
+Generated API references are checked in under [`docs/`](docs/) and are included
+in the package distribution.
+
 CSV support is implemented in this package to retain the documented framework feature without a parser runtime dependency. It supports delimiter-separated rows, quoted cells, escaped quotes, and optional header records.
 
 ### String and Buffer conversions

@@ -7,12 +7,24 @@ import type { StringStream } from "./string-stream.js";
 import { execJson, forkTransform } from "./execution.js";
 import type { ExecOptions, ForkOptions } from "./execution.js";
 
+/**
+ * Object-mode stream with Framework factories and format, replay, and execution helpers.
+ * @template Chunk The value carried by the stream.
+ */
 export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
+  /** Create a Framework stream from an iterable, async iterable, promise, or Node readable.
+   * @param source The input source.
+   * @param options Node stream options.
+   */
   static from(source: Parameters<typeof CoreDataStream.from>[0], options?: DataStreamOptions): DataStream<any> {
     // biome-ignore lint/complexity/noThisInStatic: the inherited factory must construct this framework subclass.
     return super.from(source, options as CoreDataStreamOptions) as unknown as DataStream<any>;
   }
 
+  /** Create a stream from a synchronous or asynchronous iterator.
+   * @param iterator The iterator to consume.
+   * @param options Node stream options.
+   */
   static fromIterator<T>(iterator: Iterator<T> | AsyncIterator<T>, options?: DataStreamOptions): DataStream<T> {
     const output = new this(options) as DataStream<T>;
     CoreDataStream.fromIterator(iterator as any, options as CoreDataStreamOptions).pipe(output);
@@ -21,51 +33,67 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
 
   // These delegates preserve Core's OFCA/in-place execution while replacing
   // only the public return declaration with the Framework sibling type.
+  /** Apply a synchronous or asynchronous transform while retaining a Framework DataStream.
+   * @param callback Transform applied to each value.
+   */
   map<U>(callback: (chunk: Chunk) => U | PromiseLike<U>): DataStream<U> {
     const ClassType = (arguments as unknown as Array<unknown>)[1];
     return (super.map as any).call(this, callback, ClassType) as unknown as DataStream<U>;
   }
 
+  /** Keep values for which the predicate resolves truthy. */
   filter(callback: (chunk: Chunk) => boolean | PromiseLike<boolean>): DataStream<Chunk> {
     return super.filter(callback as any) as unknown as DataStream<Chunk>;
   }
 
+  /** Observe each value and retain the original values. */
   do(callback: (chunk: Chunk) => unknown | PromiseLike<unknown>): DataStream<Chunk> {
     return super.do(callback as any) as unknown as DataStream<Chunk>;
   }
 
+  /** Run all transforms for each value and emit their results as an array. */
   all<U>(functions: Array<(value: Chunk) => U | PromiseLike<U>>): DataStream<U[]> {
     return super.all(functions as any) as unknown as DataStream<U[]>;
   }
 
+  /** Run transforms concurrently and emit the fastest result for each value. */
   race<U>(functions: Array<(value: Chunk) => U | PromiseLike<U>>): DataStream<U> {
     return super.race(functions as any) as unknown as DataStream<U>;
   }
 
+  /** Write transform output into a caller-provided Framework stream. */
   into<U>(callback: (stream: DataStream<U>, value: Chunk) => unknown | PromiseLike<unknown>, into: DataStream<U>): DataStream<U> {
     return super.into(callback as any, into as any) as unknown as DataStream<U>;
   }
 
+  /** Observe or tee values without changing this stream. */
   tee(callback: ((stream: DataStream<Chunk>) => unknown) | NodeJS.WritableStream): this {
     return super.tee(callback as any) as this;
   }
 
+  /** Apply a transform concurrently and emit completions without ordering guarantees. */
   unorder<U>(callback: (chunk: Chunk) => U | PromiseLike<U>): DataStream<U> {
     return super.unorder(callback as any) as unknown as DataStream<U>;
   }
 
+  /** Return a Framework stream copy that receives the same values. */
   copy(): DataStream<Chunk> {
     return super.copy() as unknown as DataStream<Chunk>;
   }
 
+  /** Pass values while the predicate remains true. */
   while(callback: (chunk: Chunk) => boolean | PromiseLike<boolean>): DataStream<Chunk> {
     return this.takeWhile(callback, false);
   }
 
+  /** Pass values until the predicate becomes true. */
   until(callback: (chunk: Chunk) => boolean | PromiseLike<boolean>): DataStream<Chunk> {
     return this.takeWhile(callback, true);
   }
 
+  /** Fetch an HTTP(S) URL and expose its response body as a Framework stream.
+   * @param url An HTTP or HTTPS URL.
+   */
   static async fromURL(url: URL): Promise<DataStream<any>> {
     const response = await fetchURL(url);
     const output = new DataStream<Uint8Array>();
@@ -74,12 +102,18 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return output;
   }
 
+  /** Serialize each value as one JSON value followed by `newline`.
+   * @param newline Line terminator appended to each serialized value.
+   */
   JSONStringify(newline = "\n"): StringStream {
     const output = new (getFrameworkClass<typeof StringStream>("StringStream"))();
     this.map((chunk: unknown) => `${JSON.stringify(chunk)}${newline}`).pipe(output);
     return output;
   }
 
+  /** Serialize record or array values as CSV, optionally including a header.
+   * @param options CSV delimiter, newline, and header options.
+   */
   CSVStringify(options: CsvOptions = {}): StringStream {
     const delimiter = options.delimiter ?? ",";
     const newline = options.newline ?? "\n";
@@ -102,22 +136,27 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return output;
   }
 
+  /** Serialize each value into a Framework BufferStream. */
   bufferify(serializer: any): BufferStream {
     return (this as any).map(serializer, getFrameworkClass("BufferStream")) as BufferStream;
   }
 
+  /** Convert each value to a Buffer stream. */
   toBufferStream(serializer: (chunk: Chunk) => Buffer): BufferStream {
     return this.bufferify(serializer);
   }
 
+  /** Serialize each value into a Framework StringStream. */
   stringify(serializer: any = (chunk: Chunk) => String(chunk)): StringStream {
     return (this as any).map(serializer, getFrameworkClass("StringStream")) as StringStream;
   }
 
+  /** Convert each value to a StringStream. */
   toStringStream(serializer?: (chunk: Chunk) => string): StringStream {
     return this.stringify(serializer);
   }
 
+  /** Pull values from another source into this stream without ending it. */
   async pull(pullable: unknown, ...args: unknown[]): Promise<void> {
     const incoming = (this.constructor as any).from(pullable as any, {} as DataStreamOptions, ...args as any) as DataStream<any>;
     incoming.pipe(this, { end: false });
@@ -127,10 +166,12 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     });
   }
 
+  /** Add fixed or computed object properties to each value. */
   assign(values: Record<string, unknown> | ((chunk: Chunk) => Record<string, unknown>)): DataStream<Chunk & Record<string, unknown>> {
     return this.map((chunk) => ({ ...((chunk as object) ?? {}), ...(typeof values === "function" ? values(chunk) : values) })) as DataStream<Chunk & Record<string, unknown>>;
   }
 
+  /** Concatenate this stream with subsequent readable sources. */
   concat(...streams: Array<Readable | DataStream<unknown>>): DataStream<Chunk> {
     const output = new DataStream<Chunk>();
     const sources: Readable[] = [this as unknown as Readable, ...streams as Readable[]];
@@ -144,15 +185,18 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return output;
   }
 
+  /** Reduce values into a caller-owned accumulator. */
   async accumulate<Accumulator>(reducer: (accumulator: Accumulator, chunk: Chunk) => unknown, accumulator: Accumulator): Promise<Accumulator> {
     for await (const chunk of this) await reducer(accumulator, chunk);
     return accumulator;
   }
 
+  /** Consume all values with an asynchronous consumer. */
   async consume(consumer: (chunk: Chunk) => unknown): Promise<void> {
     for await (const chunk of this) await consumer(chunk);
   }
 
+  /** Start a reduction and return the accumulator immediately. */
   reduceNow<Accumulator>(reducer: (accumulator: Accumulator, chunk: Chunk) => unknown, accumulator: Accumulator): Accumulator {
     const pending = this.reduce(reducer as any, accumulator);
     if (accumulator && typeof (accumulator as any).on === "function") {
@@ -161,6 +205,7 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return accumulator;
   }
 
+  /** Insert a fixed or computed separator between values. */
   join(separator: unknown | ((previous: Chunk, next: Chunk, ...args: unknown[]) => unknown), ...args: unknown[]): DataStream<unknown> {
     const output = new DataStream<unknown>();
     let previous: Chunk | undefined;
@@ -186,6 +231,7 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return output;
   }
 
+  /** Emit a bounded slice of the stream. */
   slice(start = 0, length?: number): DataStream<Chunk> {
     const output = new DataStream<Chunk>();
     let index = 0;
@@ -198,6 +244,7 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return output;
   }
 
+  /** Append values after the source ends. */
   endWith(...items: Chunk[]): DataStream<Chunk> {
     const output = new DataStream<Chunk>();
     this.pipe(output, { end: false });
@@ -210,6 +257,7 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
 
   unshift(chunk: any, encoding?: BufferEncoding): void;
   unshift(...items: Chunk[]): DataStream<Chunk>;
+  /** Prepend values or use Node's writable unshift form. */
   unshift(...items: any[]): DataStream<Chunk> | void {
     if (items.length === 2 && (typeof items[1] === "string" || items[1] === undefined)) {
       return super.unshift(items[0], items[1] as BufferEncoding);
@@ -220,6 +268,7 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return output;
   }
 
+  /** Remove and report a prefix of values before passing the remainder. */
   shift(count: number, callback: (chunks: Chunk[]) => unknown): DataStream<Chunk> {
     if (!Number.isInteger(count) || count < 0) throw new RangeError("shift count must be a non-negative integer");
     const output = new DataStream<Chunk>();
@@ -255,6 +304,7 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return output;
   }
 
+  /** Observe a prefix without removing it from the stream. */
   peek(count: number, callback: (chunks: Chunk[]) => void): this {
     const seen: Chunk[] = [];
     const inspect = (chunk: Chunk): void => {
@@ -271,6 +321,7 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return this;
   }
 
+  /** Invoke a callback if the stream emits no values. */
   empty(callback: () => void): this {
     let hasData = false;
     this.once("data", () => { hasData = true; });
@@ -278,6 +329,7 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return this;
   }
 
+  /** Group values into fixed-size batches, including a final partial batch. */
   batch(size: number): DataStream<Chunk[]> {
     if (!Number.isInteger(size) || size < 1) throw new RangeError("batch size must be a positive integer");
     const output = new DataStream<Chunk[]>();
@@ -291,6 +343,7 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return output;
   }
 
+  /** Group values by elapsed time and optional maximum size. */
   timeBatch(milliseconds: number, size?: number): DataStream<Chunk[]> {
     const output = new DataStream<Chunk[]>();
     let batch: Chunk[] = [];
@@ -303,16 +356,19 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return output;
   }
 
+  /** Limit emission to the requested rate. */
   rate(chunksPerSecond: number): DataStream<Chunk> {
     if (!(chunksPerSecond > 0)) throw new RangeError("chunksPerSecond must be positive");
     const delay = 1000 / chunksPerSecond;
     return this.flatMap(async (chunk) => { await new Promise((resolve) => setTimeout(resolve, delay)); return [chunk]; });
   }
 
+  /** Observe values for diagnostics while passing them through unchanged. */
   debug(observer: (chunk: Chunk) => unknown): DataStream<Chunk> {
     return this.map((chunk) => { observer(chunk); return chunk; });
   }
 
+  /** Emit rolling arrays, including partial windows at the beginning. */
   window(length: number): import("./window-stream.js").WindowStream {
     if (!(+length > 0)) throw new Error("Length argument must be a positive integer!");
     const WindowClass = getFrameworkClass<typeof import("./window-stream.js").WindowStream>("WindowStream");
@@ -335,6 +391,7 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return output;
   }
 
+  /** Route values into caller-provided targets without ending those targets. */
   separateInto(
     streams: Record<string | symbol, { write(chunk: Chunk): boolean; whenWrote?: (chunk: Chunk) => PromiseLike<unknown>; once?: (event: string, listener: () => void) => unknown }>,
     affinity: (chunk: Chunk) => string | symbol | PromiseLike<string | symbol>,
@@ -358,6 +415,7 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return this;
   }
 
+  /** Retain a bounded live replay history for rewind and tail readers. */
   keep(length = -1): this {
     const normalizedLength = length < 0 ? Number.POSITIVE_INFINITY : length;
     if (!(normalizedLength === Number.POSITIVE_INFINITY || Number.isSafeInteger(normalizedLength)) || normalizedLength < 0) {
@@ -369,20 +427,24 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return this;
   }
 
+  /** Read retained history from its beginning and follow future values. */
   rewind(count = -1): Readable {
     const replay = (this as this & { __frameworkReplay?: ReplayState }).__frameworkReplay;
     if (!replay) throw new Error("Stream not buffered, cannot rewind.");
     return replay.addReader(count);
   }
 
+  /** Read the retained suffix and follow future values. */
   tail(count: number): Readable {
     return this.rewind(count);
   }
 
+  /** Flatten iterable or async iterable values by one level. */
   flatten(): DataStream<unknown> {
     return this.flatMap((value) => value as Iterable<unknown> | AsyncIterable<unknown>);
   }
 
+  /** Map values to iterables and flatten their results. */
   flatMap<U>(mapper: (chunk: Chunk) => Iterable<U> | AsyncIterable<U> | PromiseLike<Iterable<U> | AsyncIterable<U>>): DataStream<U> {
     const output = new DataStream<U>();
     let pending = Promise.resolve();
@@ -397,6 +459,7 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return output;
   }
 
+  /** Let a mapper emit zero or more output values per input. */
   remap<U>(mapper: (emit: (value: U) => void, chunk: Chunk) => unknown): DataStream<U> {
     const output = new DataStream<U>();
     let pending = Promise.resolve();
@@ -408,6 +471,7 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return output;
   }
 
+  /** @private */
   private takeWhile(callback: (chunk: Chunk) => boolean | PromiseLike<boolean>, until: boolean): DataStream<Chunk> {
     const output = new DataStream<Chunk>();
     let stopped = false;
@@ -427,6 +491,7 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return output;
   }
 
+  /** Create a MultiStream with one lazily created branch per affinity key. */
   separate(affinity: (chunk: Chunk) => unknown | PromiseLike<unknown>, createOptions: DataStreamOptions = {}, ClassType: typeof DataStream = this.constructor as typeof DataStream): MultiStream {
     const result = new (getFrameworkClass<typeof MultiStream>("MultiStream"))();
     const streams = new Map<string, DataStream<Chunk>>();
@@ -462,6 +527,7 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return result;
   }
 
+  /** Emit buffered values newest-first, optionally dropping older overflow. */
   stack(count = 1000, drop: (chunks: Chunk[]) => unknown = () => undefined): DataStream<Chunk> {
     const stack: Chunk[] = [];
     const waiting: Array<(chunks: Chunk[]) => void> = [];
@@ -487,6 +553,7 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return output;
   }
 
+  /** Serialize the stream as a JSON array string. */
   toJSONArray(enclosure: Iterable<string> = ["[", "]"]): StringStream {
     const [open = "[", close = "]"] = Array.from(enclosure);
     const output = new (getFrameworkClass<typeof StringStream>("StringStream"))();
@@ -498,6 +565,7 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return output;
   }
 
+  /** Serialize the stream as a JSON object keyed by a function. */
   toJSONObject(key: (chunk: Chunk) => string = (chunk) => String(chunk), enclosure: Iterable<string> = ["{", "}"]): StringStream {
     const [open = "{", close = "}"] = Array.from(enclosure);
     const output = new (getFrameworkClass<typeof StringStream>("StringStream"))();
@@ -509,14 +577,33 @@ export class DataStream<Chunk = unknown> extends CoreDataStream<Chunk> {
     return output;
   }
 
+  /**
+   * Run a trusted shell command using JSON Lines on stdin/stdout.
+   * Each input value is encoded as JSON plus a newline; each nonblank output line is parsed as JSON.
+   * This is Node-only and does not impose a command, environment, or path policy.
+   * @param command Trusted shell command line.
+   * @param options Child-process and abort options.
+   */
   exec(command: string, options?: ExecOptions): DataStream<any> {
     return execJson(this, command, () => new (this.constructor as any)() as DataStream<any>, options) as DataStream<any>;
   }
 
+  /**
+   * Apply a trusted ESM or CommonJS fork module with bounded concurrency.
+   * Results are emitted in worker completion order; this method does not create MultiStream fanout.
+   * @param modulePath Path to a module exporting `(value, { ref }) => result`.
+   * @param options Concurrency and abort options.
+   */
   distribute<Output = unknown>(modulePath: string, options?: ForkOptions): DataStream<Output> {
     return forkTransform(this, modulePath, () => new (this.constructor as any)() as DataStream<Output>, false, options) as DataStream<Output>;
   }
 
+  /**
+   * Apply a trusted ESM or CommonJS fork module with bounded concurrency.
+   * Results are emitted in input order; this method does not create MultiStream fanout.
+   * @param modulePath Path to a module exporting `(value, { ref }) => result`.
+   * @param options Concurrency and abort options.
+   */
   delegate<Output = unknown>(modulePath: string, options?: ForkOptions): DataStream<Output> {
     return forkTransform(this, modulePath, () => new (this.constructor as any)() as DataStream<Output>, true, options) as DataStream<Output>;
   }

@@ -3,9 +3,11 @@ import { CoreBufferStream, getFrameworkClass } from "./shared.js";
 import { DataStream } from "./data-stream.js";
 import type { StringStream } from "./string-stream.js";
 
+/** Byte-oriented Framework stream with safe splitting, decoding, and parsing helpers. */
 export class BufferStream extends CoreBufferStream {
   // Core implements the byte-oriented operation; these covariant wrappers keep
   // the Framework sibling type and the v4 `pop` alias visible to consumers.
+  /** Remove a byte prefix and report it before passing the remainder. */
   shift(bytes: number, callback: (chunk: Buffer) => unknown): BufferStream {
     if (!Number.isInteger(bytes) || bytes < 0) throw new RangeError("shift size must be a non-negative integer");
     const output = new BufferStream();
@@ -46,10 +48,12 @@ export class BufferStream extends CoreBufferStream {
     return output;
   }
 
+  /** Alias for shifting bytes from the front of the stream. */
   pop(bytes: number, callback: (chunk: Buffer) => unknown): BufferStream {
     return this.shift(bytes, callback);
   }
 
+  /** Split buffered bytes on a non-empty string or Buffer delimiter. */
   split(splitter: string | Buffer): BufferStream {
     const needle = Buffer.from(splitter);
     if (needle.length === 0) throw new RangeError("splitter must not be empty");
@@ -78,6 +82,7 @@ export class BufferStream extends CoreBufferStream {
     return output;
   }
 
+  /** Break each input into chunks no larger than `size`. */
   breakup(size: number): BufferStream {
     if (!Number.isInteger(size) || size < 1) throw new RangeError("breakup size must be a positive integer");
     const output = new BufferStream();
@@ -103,6 +108,7 @@ export class BufferStream extends CoreBufferStream {
     return output;
   }
 
+  /** Decode bytes with a stateful Node StringDecoder. */
   stringify(encoding?: any): StringStream {
     encoding ??= "utf-8";
     const output = new (getFrameworkClass<typeof StringStream>("StringStream"))();
@@ -129,14 +135,17 @@ export class BufferStream extends CoreBufferStream {
     return output;
   }
 
+  /** Decode bytes into a Framework StringStream. */
   toStringStream(encoding = "utf-8"): StringStream {
     return this.stringify(encoding);
   }
 
+  /** Parse each Buffer through a synchronous or asynchronous parser. */
   parse<T>(parser: any): DataStream<T> {
     return (this as any).map(parser, DataStream) as DataStream<T>;
   }
 
+  /** Alias for parse(). */
   toDataStream<T>(parser: (chunk: Buffer) => T | PromiseLike<T>): DataStream<T> {
     return this.parse(parser);
   }

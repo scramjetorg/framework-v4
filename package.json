@@ -32,7 +32,9 @@
     "typecheck": "npm run build && tsc --noEmit --project test/tsconfig.json",
     "lint": "biome check --diagnostic-level=error --assist-enabled=false src scripts test package.json",
     "check": "npm run lint",
-    "pack:check": "npm run build && node scripts/pack-check.mjs"
+    "pack:check": "npm run build && node scripts/pack-check.mjs",
+    "docs": "npm run build && node scripts/docs.mjs",
+    "docs:check": "npm run build && node scripts/docs.mjs --check"
   },
   "homepage": "https://www.scramjet.org/",
   "repository": {
@@ -52,6 +54,7 @@
     "@biomejs/biome": "^2.5.12",
     "@types/node": "^22.0.0",
     "c8": "^10.1.3",
+    "jsdoc": "4.0.5",
     "typescript": "^5.9.3"
   }
 }

@@ -37,6 +37,7 @@ await Promise.all([
   cp("src", "dist/src", { recursive: true }),
   cp("README.md", "dist/README.md"),
   cp("MIGRATION.md", "dist/MIGRATION.md"),
+  cp("docs", "dist/docs", { recursive: true }),
   cp("LICENSE", "dist/LICENSE"),
   writeFile("dist/cjs/package.json", '{"type":"commonjs"}\n'),
   writeFile("dist/index.cjs", 'module.exports = require("./cjs/index.js");\n'),
