@@ -11,5 +11,5 @@
     "strict": true,
     "target": "ES2024"
   },
-  "include": ["signatures.test.ts"]
+  "include": ["signatures.test.ts", "types/**/*.ts"]
 }

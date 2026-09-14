@@ -4,14 +4,34 @@
   "private": true,
   "description": "ESM stream framework built on Scramjet Core for Node.js.",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "bun": {
+        "types": "./src/index.ts",
+        "import": "./src/index.ts"
+      },
+      "node": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      },
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "scripts": {
     "clean": "node scripts/clean.mjs",
-    "build": "npm run clean && node scripts/link-local-deps.mjs && tsc --project tsconfig.build.json && node scripts/assemble-dist.mjs",
-    "test": "npm run build && node --test test/*.test.js",
-    "coverage": "npm run build && c8 --include=\"dist/**/*.js\" --reporter=text --reporter=lcov --reports-dir=coverage node --test test/*.test.js",
+    "build": "npm run clean && tsc --project tsconfig.build.json && node scripts/assemble-dist.mjs",
+    "test": "npm run test:node",
+    "test:node": "npm run build && node --test test/*.test.js test/recovery/*.test.js",
+    "test:bun": "node scripts/bun-check.mjs",
+    "test:workspace": "node --test test/recovery/workspace-resolution.test.js",
+    "coverage": "npm run build && c8 --include=\"dist/**/*.js\" --reporter=text --reporter=lcov --reports-dir=coverage node --test test/*.test.js test/recovery/*.test.js",
     "typecheck": "npm run build && tsc --noEmit --project test/tsconfig.json",
-    "check": "biome check .",
-    "pack:check": "npm run build && npm pack --dry-run ./dist"
+    "lint": "biome check --diagnostic-level=error --assist-enabled=false src scripts test package.json",
+    "check": "npm run lint",
+    "pack:check": "npm run build && node scripts/pack-check.mjs"
   },
   "homepage": "https://www.scramjet.org/",
   "repository": {
@@ -23,8 +43,8 @@
   },
   "author": "Scramjet <opensource@scramjet.org>",
   "license": "MIT",
+  "files": ["dist", "src", "README.md", "MIGRATION.md", "LICENSE"],
   "dependencies": {
-    "rereadable-stream": "^2.0.0",
     "scramjet-core": "^5.0.0"
   },
   "devDependencies": {
